@@ -364,4 +364,5 @@ FodyWeavers.xsd
 
 # specific CMake artifacts 
 TTSKernel/deps/*
+TTSKernel/build
 
