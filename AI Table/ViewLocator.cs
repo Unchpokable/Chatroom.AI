@@ -1,10 +1,10 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
-using AI_Table.ViewModels;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Chatroom.AI.ViewModels;
 
-namespace AI_Table
+namespace Chatroom.AI
 {
     /// <summary>
     /// Given a view model, returns the corresponding view if possible.

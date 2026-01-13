@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace AI_Table.Views
+namespace Chatroom.AI.Views
 {
     public partial class MainWindow : Window
     {

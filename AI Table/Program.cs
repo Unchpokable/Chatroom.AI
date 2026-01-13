@@ -1,7 +1,7 @@
 ﻿using System;
 using Avalonia;
 
-namespace AI_Table
+namespace Chatroom.AI
 {
     internal sealed class Program
     {

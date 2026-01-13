@@ -1,0 +1,13 @@
+[project]
+name = "llm-kernel"
+version = "0.1.0"
+description = "LLM Kernel for Chatroom.AI by Unchpokable"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "openai",
+    "httpx",
+    "python-dotenv",
+    "tiktoken",
+    "pydantic"
+]

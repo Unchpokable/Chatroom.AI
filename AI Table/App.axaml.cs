@@ -1,13 +1,12 @@
 using System.Linq;
-using AI_Table.ViewModels;
-using AI_Table.Views;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Chatroom.AI.ViewModels;
+using Chatroom.AI.Views;
 
-namespace AI_Table
+namespace Chatroom.AI
 {
     public partial class App : Application
     {

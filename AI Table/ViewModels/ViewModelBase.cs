@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace AI_Table.ViewModels
+namespace Chatroom.AI.ViewModels
 {
     public abstract class ViewModelBase : ObservableObject
     {

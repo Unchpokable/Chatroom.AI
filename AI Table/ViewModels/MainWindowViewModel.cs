@@ -1,4 +1,4 @@
-﻿namespace AI_Table.ViewModels
+﻿namespace Chatroom.AI.ViewModels
 {
     public partial class MainWindowViewModel : ViewModelBase
     {
