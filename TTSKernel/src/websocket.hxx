@@ -11,16 +11,6 @@ using error_callback = std::function<void(ix::WebSocket&, const ix::WebSocketErr
 
 namespace ipc::websocket
 {
-/* "say" request structure, represents following json:
-{
-    "pipe_name": "\\\\.\\pipe\\Chatroom.AI-Pipe_tts",
-    "content": "Hello, my fellas! I am a Gemini 3 Pro, Smart and intellegent AI assistant designed by Google",
-    "model_name" : "vits-piper-en_US-lessac-medium",
-    "samplerate": 44100,
-    "should_stream": true,
-    "chunk_size": 256,
-}
-*/
 struct Request {
     std::string pipe_name;
     std::string content;

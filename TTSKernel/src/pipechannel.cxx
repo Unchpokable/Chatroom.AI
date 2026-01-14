@@ -2,6 +2,14 @@
 
 #include "pipechannel.hxx"
 
+namespace
+{
+bool is_pipe(std::string_view file_name)
+{
+    return file_name.find_first_of("\\\\.\\pipe\\") != std::string_view::npos;
+}
+} // namespace
+
 ipc::pipes::PipeStream ipc::pipes::PipeStream::make_invalid()
 {
     return PipeStream();
@@ -9,7 +17,12 @@ ipc::pipes::PipeStream ipc::pipes::PipeStream::make_invalid()
 
 ipc::pipes::PipeStream::PipeStream(std::string_view name)
 {
-    m_pipe = CreateFileA(name.data(), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
+    if(!is_pipe(name)) {
+        LOG_ERROR("Trying to open a file which is not a pipe - {}", name);
+        throw std::runtime_error("Invalid pipe name");
+    }
+
+    m_pipe = CreateFileA(name.data(), GENERIC_WRITE, 0, nullptr, OPEN_EXISTING, 0, nullptr);
 }
 
 ipc::pipes::PipeStream::~PipeStream()

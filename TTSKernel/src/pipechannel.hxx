@@ -51,7 +51,7 @@ ipc::pipes::PipeStream& ipc::pipes::PipeStream::operator<<(std::span<const T> da
 {
     DWORD written;
     if(!WriteFile(m_pipe, data.data(), static_cast<DWORD>(data.size_bytes()), &written, nullptr)) {
-        LOG_ERROR("Failed to write to pipe");
+        LOG_ERROR("Failed to write to pipe, errc {}", GetLastError());
         throw std::runtime_error("Pipe failed to write!");
     }
 

@@ -1,0 +1,11 @@
+{
+    "type": "ask_say",
+    "payload": {
+        "pipe_name": "\\\\.\\pipe\\Chatroom.AI-Pipe_tts",
+        "content": "Hello, my fellas! I am a Gemini 3 Pro, Smart and intellegent AI assistant designed by Google",
+        "model_name": "vits-piper-en_US-lessac-medium",
+        "samplerate": 44100,
+        "should_stream": true,
+        "chunk_size": 2
+    }
+}

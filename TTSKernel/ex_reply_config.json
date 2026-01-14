@@ -1,0 +1,9 @@
+{
+    "models": [
+        {
+            "model_name": "vits-piper-en_US-lessac-medium",
+            "model_lang": "en",
+            "model_samplerate": 22050
+        }
+    ]
+}

@@ -23,23 +23,16 @@ void process_tts_request(const ipc::websocket::Request& request)
         return;
     }
 
-    auto text_length = request.content.length();
-    if(text_length > request.chunk_size && request.should_stream) {
-        auto off = 0;
-        auto all_view = std::string_view(request.content.data(), text_length);
-
-        while(off < text_length) {
-            auto content_view = all_view.substr(off, request.chunk_size);
-
-            auto audio = tts::onnx::say(request.model_name, content_view, request.samplerate);
-            pipe << std::span<const float>(audio.samples.data(), audio.samples.size());
-
-            off += request.chunk_size;
-        }
+    if(!request.should_stream) {
+        auto audio =
+            tts::onnx::say(request.model_name, std::string_view(request.content.data(), request.content.size()), request.samplerate);
+        pipe << std::span<const float>(audio.samples.data(), audio.samples.size());
     }
     else {
-        auto audio = tts::onnx::say(request.model_name, std::string_view(request.content.data(), text_length), request.samplerate);
-        pipe << std::span<const float>(audio.samples.data(), audio.samples.size());
+        tts::onnx::say_stream(request.model_name, request.content, [&pipe](std::span<const float> samples, std::int32_t, float progress) {
+            pipe << samples;
+            return tts::onnx::SHERPA_CONTINUE;
+        });
     }
 }
 } // namespace
@@ -135,20 +128,63 @@ void tts::run(const std::string& shutdown_event_name, const std::string& models_
 
     BS::thread_pool workers_pool(std::thread::hardware_concurrency() / 2);
 
-    ipc::websocket::add_message_callback([&workers_pool](const ix::WebSocket& ws, std::string_view msg) {
-        auto request = ipc::websocket::parse(nlohmann::json::parse(msg));
+    ipc::websocket::add_message_callback([&workers_pool](ix::WebSocket& ws, std::string_view msg) {
+        auto json = nlohmann::json::parse(msg);
 
-        auto future = workers_pool.submit_task([request]() {
-            process_tts_request(request);
-        });
+        if(json["type"] == "ask_say") {
+            auto request = ipc::websocket::parse(json["payload"]);
 
-        {
-            std::unique_lock lock(tts_futures_mutex);
-            tts_futures.push_back(std::move(future));
+            auto future = workers_pool.submit_task([request]() {
+                process_tts_request(request);
+            });
+
+            {
+                std::unique_lock lock(tts_futures_mutex);
+                tts_futures.push_back(std::move(future));
+            }
+        }
+        else if(json["type"] == "ask_config") {
+            auto models = tts::onnx::enumerate_models();
+
+            nlohmann::json json;
+            auto models_array = nlohmann::json::array();
+
+            for(auto& model_view : models) {
+                nlohmann::json model_json;
+                model_json["model_name"] = model_view.model_name;
+                model_json["model_lang"] = model_view.engine.lang;
+                model_json["model_samplerate"] = model_view.engine.engine.SampleRate();
+
+                models_array.push_back(model_json);
+            }
+
+            json["models"] = models_array;
+
+            ws.sendText(json.dump());
         }
     });
 
-    WaitForSingleObject(shutdown_event, INFINITE);
+    while(WaitForSingleObject(shutdown_event, 200) == WAIT_TIMEOUT) {
+        std::unique_lock lock(tts_futures_mutex);
+
+        std::erase_if(tts_futures, [](std::future<void>& future) {
+            if(future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                try {
+                    future.get();
+                }
+                catch(const std::exception& ex) {
+                    LOG_ERROR("TTS server failed task with {}", ex.what());
+                }
+                catch(...) {
+                    LOG_ERROR("TTS server failed task without any resolvable exception");
+                }
+
+                return true;
+            }
+
+            return false;
+        });
+    }
 
     for(auto& future : tts_futures) {
         future.wait();
