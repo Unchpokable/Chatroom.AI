@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncIterator
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 
 from src.core.openrouter import OpenRouterClient
 from src.models.config import AppConfig
@@ -82,5 +84,18 @@ def create_app() -> FastAPI:
 
     # Mount WebSocket
     app.include_router(ws_router)
+
+    # Admin UI
+    static_dir = Path(__file__).parent.parent.parent / "static"
+
+    @app.get("/admin")
+    async def admin_page():
+        """Serve admin UI."""
+        return FileResponse(static_dir / "admin.html")
+
+    @app.get("/")
+    async def root_redirect():
+        """Redirect root to admin."""
+        return FileResponse(static_dir / "admin.html")
 
     return app

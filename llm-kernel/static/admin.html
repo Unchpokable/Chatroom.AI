@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Kernel Admin</title>
+    <style>
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #252525;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888;
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --border: #333;
+            --radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h1::before {
+            content: '';
+            width: 8px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-dot.offline {
+            background: var(--error);
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-hover);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .api-key-input {
+            display: flex;
+            gap: 10px;
+        }
+
+        .api-key-input input {
+            flex: 1;
+        }
+
+        .models-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .model-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            margin-bottom: 8px;
+        }
+
+        .model-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .model-name {
+            font-weight: 500;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 13px;
+        }
+
+        .model-context {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--bg-secondary);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 14px 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.error {
+            border-color: var(--error);
+        }
+
+        .search-box {
+            margin-bottom: 16px;
+        }
+
+        .search-box input {
+            width: 100%;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            background: var(--bg-secondary);
+            padding: 4px;
+            border-radius: var(--radius);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary);
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .info-item {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: var(--radius);
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 500;
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+
+        @media (max-width: 600px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .api-key-input {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LLM Kernel</h1>
+            <div class="status-badge">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Checking...</span>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="overview">Overview</button>
+            <button class="tab" data-tab="config">Configuration</button>
+            <button class="tab" data-tab="models">Models</button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div class="tab-content active" id="tab-overview">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Server Status</span>
+                    <button onclick="checkHealth()" class="secondary">Refresh</button>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Status</div>
+                        <div class="info-value" id="serverStatus">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Version</div>
+                        <div class="info-value" id="serverVersion">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Host</div>
+                        <div class="info-value" id="serverHost">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Port</div>
+                        <div class="info-value" id="serverPort">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">API Key</span>
+                </div>
+                <div class="form-group">
+                    <label>OpenRouter API Key</label>
+                    <div class="api-key-input">
+                        <input type="password" id="apiKeyInput" placeholder="sk-or-v1-...">
+                        <button onclick="updateApiKey()">Save</button>
+                    </div>
+                </div>
+                <div style="font-size: 13px; color: var(--text-secondary);">
+                    Current: <span id="apiKeyStatus">Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Tab -->
+        <div class="tab-content" id="tab-config">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Server Configuration</span>
+                    <div class="btn-group">
+                        <button onclick="loadConfig()" class="secondary">Reload</button>
+                        <button onclick="saveConfig()">Save Changes</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>config.json</label>
+                    <textarea id="configEditor" spellcheck="false"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Models Tab -->
+        <div class="tab-content" id="tab-models">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Available Models</span>
+                    <button onclick="loadModels(true)" class="secondary">Refresh</button>
+                </div>
+                <div class="search-box">
+                    <input type="text" id="modelSearch" placeholder="Search models..." oninput="filterModels()">
+                </div>
+                <div class="models-list" id="modelsList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading models...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '/api';
+        let allModels = [];
+
+        // Toast notifications
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        // Health check
+        async function checkHealth() {
+            try {
+                const res = await fetch(`${API_BASE}/health`);
+                const data = await res.json();
+
+                document.getElementById('statusDot').className = 'status-dot online';
+                document.getElementById('statusText').textContent = 'Online';
+                document.getElementById('serverStatus').textContent = data.status;
+                document.getElementById('serverVersion').textContent = data.version;
+            } catch (e) {
+                document.getElementById('statusDot').className = 'status-dot offline';
+                document.getElementById('statusText').textContent = 'Offline';
+                document.getElementById('serverStatus').textContent = 'Error';
+            }
+        }
+
+        // Load config
+        async function loadConfig() {
+            try {
+                const res = await fetch(`${API_BASE}/config`);
+                const data = await res.json();
+
+                document.getElementById('configEditor').value = JSON.stringify(data, null, 2);
+                document.getElementById('serverHost').textContent = data.server.host;
+                document.getElementById('serverPort').textContent = data.server.port;
+            } catch (e) {
+                showToast('Failed to load config', 'error');
+            }
+        }
+
+        // Save config
+        async function saveConfig() {
+            try {
+                const config = JSON.parse(document.getElementById('configEditor').value);
+                const res = await fetch(`${API_BASE}/config`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                if (res.ok) {
+                    showToast('Configuration saved');
+                    loadConfig();
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (e) {
+                showToast(e.message || 'Invalid JSON or save failed', 'error');
+            }
+        }
+
+        // API Key
+        async function loadApiKeyStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/config/apikey`);
+                const data = await res.json();
+
+                document.getElementById('apiKeyStatus').textContent =
+                    data.is_set ? data.masked : 'Not set';
+            } catch (e) {
+                document.getElementById('apiKeyStatus').textContent = 'Error';
+            }
+        }
+
+        async function updateApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (!key) {
+                showToast('Please enter an API key', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/config/apikey`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_key: key })
+                });
+
+                if (res.ok) {
+                    showToast('API key updated');
+                    document.getElementById('apiKeyInput').value = '';
+                    loadApiKeyStatus();
+                } else {
+                    throw new Error('Failed to update');
+                }
+            } catch (e) {
+                showToast('Failed to update API key', 'error');
+            }
+        }
+
+        // Models
+        async function loadModels(refresh = false) {
+            const container = document.getElementById('modelsList');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading models...</p></div>';
+
+            try {
+                const url = refresh ? `${API_BASE}/models?refresh=true` : `${API_BASE}/models`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                allModels = data.models;
+                renderModels(allModels);
+            } catch (e) {
+                container.innerHTML = '<div class="loading">Failed to load models</div>';
+            }
+        }
+
+        function renderModels(models) {
+            const container = document.getElementById('modelsList');
+
+            if (models.length === 0) {
+                container.innerHTML = '<div class="loading">No models found</div>';
+                return;
+            }
+
+            container.innerHTML = models.map(m => `
+                <div class="model-item">
+                    <span class="model-name">${m.id}</span>
+                    <span class="model-context">${formatContext(m.context_length)}</span>
+                </div>
+            `).join('');
+        }
+
+        function filterModels() {
+            const query = document.getElementById('modelSearch').value.toLowerCase();
+            const filtered = allModels.filter(m =>
+                m.id.toLowerCase().includes(query) ||
+                m.name.toLowerCase().includes(query)
+            );
+            renderModels(filtered);
+        }
+
+        function formatContext(length) {
+            if (length >= 1000000) return `${(length / 1000000).toFixed(1)}M ctx`;
+            if (length >= 1000) return `${(length / 1000).toFixed(0)}K ctx`;
+            return `${length} ctx`;
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            checkHealth();
+            loadConfig();
+            loadApiKeyStatus();
+            loadModels();
+        });
+    </script>
+</body>
+</html>
