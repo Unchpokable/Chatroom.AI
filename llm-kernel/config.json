@@ -1,0 +1,22 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8765,
+    "ws_path": "/ws",
+    "api_prefix": "/api"
+  },
+  "websocket": {
+    "max_message_size_mb": 100,
+    "ping_interval_sec": 30,
+    "ping_timeout_sec": 10
+  },
+  "openrouter": {
+    "base_url": "https://openrouter.ai/api/v1",
+    "timeout_sec": 600,
+    "max_retries": 3
+  },
+  "defaults": {
+    "model": "anthropic/claude-3.5-sonnet",
+    "max_tokens": 4096
+  }
+}

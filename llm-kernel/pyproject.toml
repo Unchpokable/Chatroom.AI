@@ -9,5 +9,12 @@ dependencies = [
     "httpx",
     "python-dotenv",
     "tiktoken",
-    "pydantic"
+    "pydantic",
+    "uvicorn[standard]>=0.40.0",
+    "fastapi>=0.128.0",
+]
+
+[dependency-groups]
+dev = [
+    "grpcio-tools>=1.76.0",
 ]
