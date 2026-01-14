@@ -15,7 +15,6 @@ from src.server.protocol import (
     deserialize_request,
     serialize_response,
 )
-from src.utils.config import get_config
 from src.utils.logging import get_logger
 
 
@@ -64,7 +63,6 @@ async def handle_llm_request(
 
         if request.stream:
             # Streaming mode
-            accumulated_content = ""
             finish_reason = None
             prompt_tokens = 0
             completion_tokens = 0
@@ -72,13 +70,10 @@ async def handle_llm_request(
             async for chunk in client.chat_completion_stream(chat_request):
                 for choice in chunk.choices:
                     if choice.delta and choice.delta.content:
-                        content = choice.delta.content
-                        accumulated_content += content
-
-                        # Send chunk to client
+                        # Send chunk to client immediately
                         await send_response(
                             websocket,
-                            create_chunk(request_id, content),
+                            create_chunk(request_id, choice.delta.content),
                             fmt,
                         )
 

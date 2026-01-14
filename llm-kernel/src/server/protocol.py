@@ -1,8 +1,5 @@
 import json
 from enum import Enum
-from typing import Any
-
-from pydantic import BaseModel
 
 from src.models.requests import LLMRequest
 from src.models.responses import (
@@ -54,8 +51,8 @@ def deserialize_request(data: bytes | str, fmt: SerializationFormat) -> LLMReque
             return LLMRequest.model_validate(parsed)
 
         elif fmt == SerializationFormat.PROTOBUF:
-            if isinstance(data, str):
-                data = data.encode("utf-8")
+            if not isinstance(data, bytes):
+                raise ProtocolError("Protobuf format requires binary data")
 
             ws_msg = messages_pb2.WebSocketMessage()
             ws_msg.ParseFromString(data)

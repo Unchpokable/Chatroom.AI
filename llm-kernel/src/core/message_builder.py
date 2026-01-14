@@ -30,11 +30,8 @@ def build_chat_request(
         ChatMessage(role="user", content=llm_request.user_prompt)
     )
 
-    # Use model from request or fall back to default
-    model = llm_request.model or defaults.model
-
     return ChatCompletionRequest(
-        model=model,
+        model=llm_request.model,
         messages=messages,
         stream=llm_request.stream,
         max_tokens=defaults.max_tokens,
