@@ -164,7 +164,7 @@ void tts::run(const std::string& shutdown_event_name, const std::string& models_
         }
     });
 
-    while(WaitForSingleObject(shutdown_event, 200) == WAIT_TIMEOUT) {
+    static auto process_futures = []() {
         std::unique_lock lock(tts_futures_mutex);
 
         std::erase_if(tts_futures, [](std::future<void>& future) {
@@ -184,10 +184,16 @@ void tts::run(const std::string& shutdown_event_name, const std::string& models_
 
             return false;
         });
+    };
+
+    while(WaitForSingleObject(shutdown_event, 200) == WAIT_TIMEOUT) {
+        process_futures();
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    for(auto& future : tts_futures) {
-        future.wait();
+    while(!tts_futures.empty()) {
+        process_futures();
     }
 
     ipc::websocket::shutdown();
