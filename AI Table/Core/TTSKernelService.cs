@@ -22,6 +22,9 @@ internal class TtsKernelService
     private IntPtr _shutdownEvent = IntPtr.Zero;
     private ClientWebSocket? _ttsWebsocketClient;
 
+    public bool Running => _ttsProcess is not null && !_ttsProcess.HasExited;
+    public bool Connected => _ttsWebsocketClient is not null && _ttsWebsocketClient.State == WebSocketState.Open;
+
     ~TtsKernelService()
     {
         if (!_ttsProcess?.HasExited ?? false)
