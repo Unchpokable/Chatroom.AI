@@ -4,7 +4,7 @@
 
 int main(int argc, char* argv[])
 {
-    uulog::add_sink(uulog::builtin::stdout_ansi);
+    uulog::add_sink(uulog::builtin::stdout_mono);
 
     if(argc < 3) {
         LOG_ERROR("Not enough arguments to run service");

@@ -119,6 +119,13 @@ void tts::run(const std::string& shutdown_event_name, const std::string& models_
 {
     auto shutdown_event = CreateEventA(nullptr, TRUE, FALSE, shutdown_event_name.c_str());
 
+    if(!std::filesystem::exists(models_root) || !std::filesystem::is_directory(models_root)) {
+        LOG_ERROR("Models root directory does not exist or is not a directory: {}", models_root);
+        MessageBoxA(
+            nullptr, "Models root directory does not exist or is not a directory", "TTS Kernel startup error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
     init_tts_from_path(models_root);
 
     ipc::websocket::initialize();
@@ -188,8 +195,6 @@ void tts::run(const std::string& shutdown_event_name, const std::string& models_
 
     while(WaitForSingleObject(shutdown_event, 200) == WAIT_TIMEOUT) {
         process_futures();
-
-        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     while(!tts_futures.empty()) {
