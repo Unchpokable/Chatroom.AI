@@ -75,8 +75,8 @@ public static class ResultImpl
     {
         return result switch
         {
-            Success<T>(_) => true,
-            Failure<T>(_) => false,
+            Success<T>(_) => false,
+            Failure<T>(_) => true,
             _ => false
         };
     }
