@@ -101,6 +101,7 @@ void init_tts_from_path(const std::string& path)
                 provider = config.at("provider").get<std::string>();
             }
 
+            // todo: make me async!
             tts::onnx::setup_config(model_name, full_model_path, full_tokens_path, lang_key, provider);
 
             LOG_INFO("Loaded TTS model '{}' from {}", model_name, model_dir.string());

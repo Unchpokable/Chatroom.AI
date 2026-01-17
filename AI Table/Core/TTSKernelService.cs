@@ -10,11 +10,26 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 
-using Chatroom.AI.Extensions;
+using Chatroom.AI.Utils;
 
 namespace Chatroom.AI.Core;
+
+internal sealed record TtsModelDescription
+(
+    [property: JsonPropertyName("model_name")]
+    string ModelName,
+
+    [property: JsonPropertyName("model_lang")]
+    string ModelLang,
+
+    [property: JsonPropertyName("model_samplerate")]
+    string ModelSampleRate
+);
+
+internal sealed record TtsModelsResponse(TtsModelDescription[] Models);
 
 internal class TtsKernelService
 {
@@ -24,6 +39,8 @@ internal class TtsKernelService
 
     public bool Running => _ttsProcess is not null && !_ttsProcess.HasExited;
     public bool Connected => _ttsWebsocketClient is not null && _ttsWebsocketClient.State == WebSocketState.Open;
+
+    public List<string> TtsModels { get; private set; } = new();
 
     ~TtsKernelService()
     {
@@ -42,10 +59,7 @@ internal class TtsKernelService
     public async Task Startup()
     {
         var exePath = LocateExecutable();
-        if (string.IsNullOrEmpty(exePath))
-        {
-            throw new FileNotFoundException("TTSKernel executable not found.");
-        }
+        Assert.NotNullOrEmpty(exePath);
 
         var modelsPath = LocateTtsModels();
 
@@ -65,26 +79,55 @@ internal class TtsKernelService
 
         if (started)
         {
+            await Task.Delay(500); // I guess that 500 milliseconds is enough to TTSServer to startup
             _ttsWebsocketClient = new ClientWebSocket();
             // todo: add port configuration
             await _ttsWebsocketClient.ConnectAsync(new Uri("ws://127.0.0.1:45678"), CancellationToken.None);
+
+            while (_ttsWebsocketClient.State == WebSocketState.Connecting)
+            {
+                await Task.Delay(10);
+            }
+
+            Assert.State(_ttsWebsocketClient.State == WebSocketState.Open);
         }
     }
 
-    public async Task<Result<NamedPipeServerStream>> RequestAudioStream(string content, string modelName, int sampleRate, bool shouldStream, int sentencesChunkSize = 2)
+    public async Task<TtsModelsResponse?> RequestModels()
     {
-        if (_ttsWebsocketClient is null)
+        Assert.NotNull(_ttsWebsocketClient);
+
+        var request = new
         {
-            return new InvalidOperationException("TTS WebSocket client is not connected").ToFailure<NamedPipeServerStream>();
+            type = "ask_config",
+            payload = new { },
+        };
+
+        var text = JsonSerializer.Serialize(request);
+
+        await _ttsWebsocketClient.SendAsync(Encoding.UTF8.GetBytes(text), WebSocketMessageType.Text, true, CancellationToken.None);
+
+        var responseBuffer = new ArraySegment<byte>(new byte[2048]);
+        var response = new StringBuilder();
+
+        var result = await _ttsWebsocketClient.ReceiveAsync(responseBuffer, CancellationToken.None);
+        while (!result.EndOfMessage)
+        {
+            result = await _ttsWebsocketClient.ReceiveAsync(responseBuffer, CancellationToken.None);
+            response.Append(Encoding.UTF8.GetString(responseBuffer));
         }
+
+        return JsonSerializer.Deserialize<TtsModelsResponse>(response.ToString());
+    }
+
+    public async Task<NamedPipeServerStream> RequestAudioStream(string content, string modelName, int sampleRate, bool shouldStream, int sentencesChunkSize = 2)
+    {
+        Assert.NotNull(_ttsWebsocketClient);
 
         var pipeName = $"TTSKernel_AudioPipe_{Random.Shared.Next()}";
         var stream = CreateTtsPipeServer(pipeName);
 
-        if (!stream.IsConnected)
-        {
-            return new InvalidOperationException("Unable to create NamedPipe").ToFailure<NamedPipeServerStream>();
-        }
+        Assert.State(stream.IsConnected);
 
         var request = JsonContent.Create(new
         {
@@ -102,16 +145,10 @@ internal class TtsKernelService
 
         var requestJson = JsonSerializer.Serialize(request);
 
-        try
-        {
-            await _ttsWebsocketClient.SendAsync(Encoding.UTF8.GetBytes(requestJson), WebSocketMessageType.Text, true, CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
-            return ex.ToFailure<NamedPipeServerStream>();
-        }
+        await _ttsWebsocketClient.SendAsync(Encoding.UTF8.GetBytes(requestJson), WebSocketMessageType.Text, true, CancellationToken.None);
 
-        return stream.ToSuccess();
+
+        return stream;
     }
 
     public async Task ShutdownAsync(int timeout = 5000)

@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Chatroom.AI.Core;
 
 internal sealed record FunctionDescription(
