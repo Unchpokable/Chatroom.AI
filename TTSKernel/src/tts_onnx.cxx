@@ -14,6 +14,11 @@ std::unordered_map<std::string, tts::onnx::TtsEngine> model_engines;
 
 namespace
 {
+std::mutex loading_mutex;
+} // namespace
+
+namespace
+{
 sherpa_onnx::cxx::Wave resample(const sherpa_onnx::cxx::Wave& wave, std::uint32_t target_sample_rate)
 {
     if(wave.sample_rate == target_sample_rate) {
@@ -86,7 +91,10 @@ void tts::onnx::setup_config(std::string_view model_name,
         return;
     }
 
-    model_engines.emplace(std::string(model_name), TtsEngine(config, std::move(tts), std::string(lang_key)));
+    {
+        std::unique_lock lock(loading_mutex);
+        model_engines.emplace(std::string(model_name), TtsEngine(config, std::move(tts), std::string(lang_key)));
+    }
 }
 
 sherpa_onnx::cxx::Wave tts::onnx::say(std::string_view model_name, std::string_view text, std::uint32_t samplerate)

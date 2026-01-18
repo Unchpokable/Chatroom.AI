@@ -66,6 +66,9 @@ void init_tts_from_path(const std::string& path)
         return;
     }
 
+    BS::thread_pool loading_task_pool;
+    std::vector<std::future<void>> loading_tasks;
+
     for(const auto& entry : std::filesystem::directory_iterator(models_root)) {
         if(!entry.is_directory()) {
             continue;
@@ -101,8 +104,13 @@ void init_tts_from_path(const std::string& path)
                 provider = config.at("provider").get<std::string>();
             }
 
-            // todo: make me async!
-            tts::onnx::setup_config(model_name, full_model_path, full_tokens_path, lang_key, provider);
+            auto task = [model_name, full_model_path, full_tokens_path, lang_key, provider]() {
+                tts::onnx::setup_config(model_name, full_model_path, full_tokens_path, lang_key, provider);
+            };
+
+            auto future = loading_task_pool.submit_task(task);
+
+            loading_tasks.push_back(future);
 
             LOG_INFO("Loaded TTS model '{}' from {}", model_name, model_dir.string());
         }
@@ -112,6 +120,26 @@ void init_tts_from_path(const std::string& path)
         catch(const std::exception& e) {
             LOG_ERROR("Failed to load model from {}: {}", model_dir.string(), e.what());
         }
+    }
+
+    while(!loading_tasks.empty()) {
+        std::erase_if(loading_tasks, [](std::future<void>& future) {
+            if(future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                try {
+                    future.get();
+                }
+                catch(const std::exception& ex) {
+                    LOG_ERROR("TTS server failed loading task task with {}", ex.what());
+                }
+                catch(...) {
+                    LOG_ERROR("TTS server failed loading task without any resolvable exception");
+                }
+
+                return true;
+            }
+
+            return false;
+        });
     }
 }
 } // namespace
