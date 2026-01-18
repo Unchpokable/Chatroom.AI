@@ -40,7 +40,7 @@ internal class TtsKernelService
     public bool Running => _ttsProcess is not null && !_ttsProcess.HasExited;
     public bool Connected => _ttsWebsocketClient is not null && _ttsWebsocketClient.State == WebSocketState.Open;
 
-    public List<string> TtsModels { get; private set; } = new();
+    public TtsModelsResponse? TtsModels { get; private set; }
 
     ~TtsKernelService()
     {
@@ -117,7 +117,8 @@ internal class TtsKernelService
             response.Append(Encoding.UTF8.GetString(responseBuffer));
         }
 
-        return JsonSerializer.Deserialize<TtsModelsResponse>(response.ToString());
+        TtsModels = JsonSerializer.Deserialize<TtsModelsResponse>(response.ToString());
+        return TtsModels;
     }
 
     public async Task<NamedPipeServerStream> RequestAudioStream(string content, string modelName, int sampleRate, bool shouldStream, int sentencesChunkSize = 2)
