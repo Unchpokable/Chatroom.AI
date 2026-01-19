@@ -4,7 +4,7 @@
 
 namespace tts::onnx
 {
-std::uint8_t threads_count;
+std::uint8_t threads_count = 1;
 } // namespace tts::onnx
 
 namespace
@@ -70,6 +70,11 @@ tts::onnx::TtsEngine& tts::onnx::TtsEngine::operator=(tts::onnx::TtsEngine&& oth
 void tts::onnx::configure_tts_threads_count(std::uint8_t count)
 {
     threads_count = count;
+}
+
+std::uint8_t tts::onnx::get_tts_threads_count()
+{
+    return threads_count;
 }
 
 void tts::onnx::setup_config(std::string_view model_name,

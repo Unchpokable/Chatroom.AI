@@ -66,7 +66,7 @@ void init_tts_from_path(const std::string& path)
         return;
     }
 
-    BS::thread_pool loading_task_pool;
+    BS::thread_pool loading_task_pool(std::min(4u, std::thread::hardware_concurrency() / 2));
     std::vector<std::future<void>> loading_tasks;
 
     for(const auto& entry : std::filesystem::directory_iterator(models_root)) {

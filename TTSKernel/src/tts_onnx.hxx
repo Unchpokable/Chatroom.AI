@@ -45,12 +45,8 @@ struct TtsEngineView {
 
 namespace tts::onnx
 {
-extern std::uint8_t threads_count;
-} // namespace tts::onnx
-
-namespace tts::onnx
-{
 void configure_tts_threads_count(std::uint8_t threads_count);
+std::uint8_t get_tts_threads_count();
 } // namespace tts::onnx
 
 namespace tts::onnx
