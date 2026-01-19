@@ -1,16 +1,28 @@
+using System.Text.Json.Serialization;
+
 namespace Chatroom.AI.Core;
 
+/// <summary>
+/// Function description within a tool call
+/// </summary>
 internal sealed record FunctionDescription(
-    string Name,
-    string Arguments
+    [property: JsonPropertyName("name")] string Name,
+    [property: JsonPropertyName("arguments")] string Arguments
 );
 
+/// <summary>
+/// Represents a tool call from the model's response
+/// </summary>
 internal sealed record ToolCall(
-    string Id,
-    string Type,
-    FunctionDescription Function
+    [property: JsonPropertyName("id")] string Id,
+    [property: JsonPropertyName("type")] string Type,
+    [property: JsonPropertyName("function")] FunctionDescription Function,
+    [property: JsonPropertyName("index")] int? Index = null
 );
 
+/// <summary>
+/// Builder for accumulating tool call data from streaming chunks
+/// </summary>
 internal sealed class ToolCallBuilder
 {
     private ToolCall _state = new("", "", new FunctionDescription("", ""));
