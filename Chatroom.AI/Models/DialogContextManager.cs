@@ -7,10 +7,13 @@ using Chatroom.AI.Utils;
 
 namespace Chatroom.AI.Models;
 
-internal class DialogContextManager
+public class DialogContextManager
 {
     public string SharedSummary { get; private set; } = string.Empty;
     public List<ContextMessage> SharedHistory { get; set; } = new();
+
+    /// <summary>Глобальный системный промпт (правила чата, теги, участники)</summary>
+    public string GlobalSystemPrompt { get; set; } = string.Empty;
 
     public Persona.Language DialogPrimaryLanguage { get; set; } = Persona.Language.Ru;
 
@@ -20,9 +23,10 @@ internal class DialogContextManager
 
     public string AppendSummaryPrompt { get; set; } = "Merge these summaries of single conversation:\n";
 
-    private LlmKernelService _llmService = new();
+    private readonly LlmKernelService _llmService = new();
+    private readonly PromptBuilder _promptBuilder = new();
 
-    private List<string> _defaultTextModality = new List<string>() { "text" };
+    private readonly List<string> _defaultTextModality = new() { "text" };
 
     void AddSharedHistoryMessage(ContextMessage message)
     {
@@ -36,7 +40,7 @@ internal class DialogContextManager
         // Summarizer agent should work with english language to use less tokens for system prompt.
         Assert.State(agent.PersonaLanguageKey == Persona.Language.En);
 
-        var systemPrompt = agent.FormatSystemPrompt();
+        var systemPrompt = _promptBuilder.BuildSystemPrompt(GlobalSystemPrompt, agent);
 
         var historyBuilder = new StringBuilder();
 
@@ -59,7 +63,7 @@ internal class DialogContextManager
     {
         Assert.State(agent.PersonaLanguageKey == Persona.Language.En);
 
-        var systemPrompt = agent.FormatSystemPrompt();
+        var systemPrompt = _promptBuilder.BuildSystemPrompt(GlobalSystemPrompt, agent);
 
         var prompt = $"""
 {AppendSummaryPrompt}

@@ -7,7 +7,7 @@ namespace Chatroom.AI.Core;
 /// Represents a message in the conversation context.
 /// Supports regular messages, assistant messages with tool calls, and tool result messages.
 /// </summary>
-internal sealed class ContextMessage
+public sealed class ContextMessage
 {
     private const string RoleUser = "user";
     private const string RoleAssistant = "assistant";

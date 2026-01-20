@@ -5,7 +5,7 @@ namespace Chatroom.AI.Core;
 /// <summary>
 /// Function description within a tool call
 /// </summary>
-internal sealed record FunctionDescription(
+public sealed record FunctionDescription(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("arguments")] string Arguments
 );
@@ -13,7 +13,7 @@ internal sealed record FunctionDescription(
 /// <summary>
 /// Represents a tool call from the model's response
 /// </summary>
-internal sealed record ToolCall(
+public sealed record ToolCall(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("function")] FunctionDescription Function,
@@ -23,7 +23,7 @@ internal sealed record ToolCall(
 /// <summary>
 /// Builder for accumulating tool call data from streaming chunks
 /// </summary>
-internal sealed class ToolCallBuilder
+public sealed class ToolCallBuilder
 {
     private ToolCall _state = new("", "", new FunctionDescription("", ""));
 

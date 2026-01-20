@@ -15,7 +15,7 @@ namespace Chatroom.AI.Core;
 /// <summary>
 /// Result of a completion that may contain either text content or tool calls
 /// </summary>
-internal sealed record CompletionResult(
+public sealed record CompletionResult(
     string? Content,
     ToolCall[]? ToolCalls,
     string? FinishReason
@@ -24,7 +24,7 @@ internal sealed record CompletionResult(
     public bool HasToolCalls => ToolCalls is { Length: > 0 };
 }
 
-internal class LlmKernelService
+public class LlmKernelService
 {
     private readonly string _openRouterBaseApi = "https://openrouter.ai/api/v1/";
     private readonly string _openRouterChatApi = "chat/completions";
@@ -267,7 +267,7 @@ internal class LlmKernelService
 /// <summary>
 /// Represents a chunk from streaming completion
 /// </summary>
-internal sealed record StreamChunk(
+public sealed record StreamChunk(
     string? Content,
     ToolCall[]? ToolCalls,
     string? FinishReason

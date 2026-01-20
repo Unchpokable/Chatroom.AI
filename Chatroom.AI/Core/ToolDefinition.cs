@@ -6,7 +6,7 @@ namespace Chatroom.AI.Core;
 /// <summary>
 /// JSON Schema for function parameters
 /// </summary>
-internal sealed record ParametersSchema(
+public sealed record ParametersSchema(
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("properties")] Dictionary<string, ParameterProperty>? Properties = null,
     [property: JsonPropertyName("required")] string[]? Required = null
@@ -20,7 +20,7 @@ internal sealed record ParametersSchema(
 /// <summary>
 /// Property definition within parameters schema
 /// </summary>
-internal sealed record ParameterProperty(
+public sealed record ParameterProperty(
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("description")] string? Description = null,
     [property: JsonPropertyName("enum")] string[]? Enum = null,
@@ -30,7 +30,7 @@ internal sealed record ParameterProperty(
 /// <summary>
 /// Function definition for a tool
 /// </summary>
-internal sealed record FunctionDefinition(
+public sealed record FunctionDefinition(
     [property: JsonPropertyName("name")] string Name,
     [property: JsonPropertyName("description")] string Description,
     [property: JsonPropertyName("parameters")] ParametersSchema Parameters
@@ -39,7 +39,7 @@ internal sealed record FunctionDefinition(
 /// <summary>
 /// Tool definition for OpenRouter API
 /// </summary>
-internal sealed record ToolDefinition(
+public sealed record ToolDefinition(
     [property: JsonPropertyName("type")] string Type,
     [property: JsonPropertyName("function")] FunctionDefinition Function
 )
@@ -51,13 +51,13 @@ internal sealed record ToolDefinition(
 /// <summary>
 /// Tool choice options for controlling tool usage
 /// </summary>
-internal abstract record ToolChoice
+public abstract record ToolChoice
 {
     public static ToolChoice Auto => new ToolChoiceAuto();
     public static ToolChoice None => new ToolChoiceNone();
     public static ToolChoice ForceFunction(string functionName) => new ToolChoiceFunction(functionName);
 }
 
-internal sealed record ToolChoiceAuto : ToolChoice;
-internal sealed record ToolChoiceNone : ToolChoice;
-internal sealed record ToolChoiceFunction(string FunctionName) : ToolChoice;
+public sealed record ToolChoiceAuto : ToolChoice;
+public sealed record ToolChoiceNone : ToolChoice;
+public sealed record ToolChoiceFunction(string FunctionName) : ToolChoice;
