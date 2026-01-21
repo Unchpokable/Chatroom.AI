@@ -25,4 +25,10 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
 		<PackageReference Include="NLua" Version="1.7.6" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="hwprotect.dll">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 </Project>

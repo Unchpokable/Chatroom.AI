@@ -12,13 +12,17 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _greeting = "Загрузка...";
 
+    private TokenLocker _apiTokenLocker = new();
+
     public MainWindowViewModel()
     {
-        _llmService.ApiKey = "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";
+        _apiTokenLocker.LoadFromFile("openrouter_tokens");
+
+        _llmService.ApiKey = _apiTokenLocker.GetKey("Chatroom.AI.Key");
 
         if (string.IsNullOrEmpty(_llmService.ApiKey))
         {
-            Greeting = "Ошибка: не задана переменная окружения OPENROUTER_API_KEY";
+            Greeting = "Ошибка: не найден подходящий ключ по умолчанию, API не доступно";
             return;
         }
 
@@ -38,14 +42,19 @@ public partial class MainWindowViewModel : ViewModelBase
             };
             var modalities = new List<string> { "text" };
 
-            var response = await _llmService.Complete(
-                model: "mistralai/mistral-large-2512",
+            var response = _llmService.CompleteStream(
+                model: "deepseek/deepseek-chat-v3-0324",
                 systemPrompt: systemPrompt,
                 messageHistory: history,
                 modalities: modalities
             );
 
-            Greeting = $"Французский генератор случайных чисел нагаллюцинировал:\n\n{response}";
+            Greeting = $"Китайский генератор случайных чисел нагаллюцинировал:\n\n";
+
+            await foreach (var completion in response)
+            {
+                Greeting += completion;
+            }
         }
         catch (Exception ex)
         {
